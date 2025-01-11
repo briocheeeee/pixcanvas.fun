@@ -1,6 +1,6 @@
 # pixcanvas.fun
 
-[Anglais](README.md) | [Français](docs/fr/README.md) | [Allemand](docs/de/README.md) | [عربية](docs/ar/README.md) | [中文](docs/zh/README.md) | [Slovaque](docs/hi/README.md) | [Slovaque](docs/sr/README.md) | [Espagnol](docs/es/README.md) | [Italien](docs/it/README.md)
+[English](README.md) | [French](docs/fr/README.md) | [German](docs/de/README.md) | [عربية](docs/ar/README.md) | [中文](docs/zh/README.md) | [हिन्दी](docs/hi/README.md) | [Српски](docs/sr/README.md) | [Spanish](docs/es/README.md) | [Italian](docs/it/README.md)
 
 Bienvenue sur **pixcanvas.fun**, un jeu de pixel art collaboratif et créatif ! Avec **pixcanvas.fun**, vous pouvez vous connecter avec d'autres personnes, libérer votre créativité et créer de superbes œuvres d'art en pixels sur une toile partagée.
 
