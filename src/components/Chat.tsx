@@ -34,19 +34,39 @@ export function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!isAuthenticated || !newMessage.trim()) return;
 
-    const message: Message = {
-      id: crypto.randomUUID(),
-      user: user?.name || 'Anonymous',
-      content: newMessage,
-      timestamp: new Date(),
-      country: 'GB', // This would come from user's profile or geolocation
-    };
+    try {
+      // Get user's location only when sending a message
+      const response = await fetch('https://ipapi.co/json/');
+      const locationData = await response.json();
+      const country = locationData.country || 'GB';
 
-    setMessages([...messages, message]);
-    setNewMessage('');
+      const message: Message = {
+        id: crypto.randomUUID(),
+        user: user?.name || 'Anonymous',
+        content: newMessage,
+        timestamp: new Date(),
+        country,
+      };
+
+      setMessages([...messages, message]);
+      setNewMessage('');
+    } catch (error) {
+      console.error('Failed to get location:', error);
+      // Fall back to default country if location fetch fails
+      const message: Message = {
+        id: crypto.randomUUID(),
+        user: user?.name || 'Anonymous',
+        content: newMessage,
+        timestamp: new Date(),
+        country: 'GB',
+      };
+
+      setMessages([...messages, message]);
+      setNewMessage('');
+    }
   };
 
   return (

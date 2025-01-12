@@ -1,0 +1,8 @@
+{
+  "admins": [
+    {
+      "nickname": "admin",
+      "uid": "auth0|admin123"
+    }
+  ]
+}
