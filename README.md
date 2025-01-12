@@ -82,8 +82,8 @@ git push origin your-name -de-branche
 
 ## License
 
-This project is licensed under the [MIT License[(LICENSE). You are free to use, modify and distribute this project, provided you respect the terms of the license.
+This project is licensed under the MIT License. You are free to use, modify and distribute this project, provided you respect the terms of the license.
 
 ## Author
 
-Created by Brioche. For any questions or suggestions, feel free to contact me at [[skipskipped430@ gmail.com](mailto:skipskipped430@gmail.com)] or via [Discord](https://discord.com/users/933785709762973756).
+Created by Brioche. For any questions or suggestions, feel free to contact me at [skipskipped430@ gmail.com](mailto:skipskipped430@gmail.com) or via [Discord](https://discord.com/users/933785709762973756).
