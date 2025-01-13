@@ -8,6 +8,7 @@ import { Help } from './components/Help';
 import { UserProfile } from './components/UserProfile';
 import { MapSelector } from './components/MapSelector';
 import { useSettingsStore } from './store/useStore';
+import admins from './config/admins.json';
 
 const CANVAS_SIZE = 1000;
 const CHUNK_SIZE = 150;
@@ -60,8 +61,113 @@ function App() {
   const { loginWithRedirect, isAuthenticated, user } = useAuth0();
   const settings = useSettingsStore();
 
-  // Rest of the component remains the same, just replace Map with MapIcon in the JSX
-  
+  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !isAuthenticated) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) * (CANVAS_SIZE / rect.width));
+    const y = Math.floor((e.clientY - rect.top) * (CANVAS_SIZE / rect.height));
+
+    if (Date.now() - lastPlaced < COOLDOWN_TIME) return;
+
+    const index = y * CANVAS_SIZE + x;
+    const newPixels = [...pixels];
+    newPixels[index] = selectedColor;
+    setPixels(newPixels);
+    setLastPlaced(Date.now());
+
+    // Update chunk cache
+    const chunkX = Math.floor(x / CHUNK_SIZE);
+    const chunkY = Math.floor(y / CHUNK_SIZE);
+    const chunkId = `${chunkX}-${chunkY}`;
+    
+    const update: PixelUpdate = {
+      x,
+      y,
+      color: selectedColor,
+      timestamp: Date.now(),
+      userId: user?.sub || '',
+    };
+
+    setPixelUpdates(prev => [...prev, update]);
+  }, [pixels, selectedColor, lastPlaced, isAuthenticated, user]);
+
+  const handleCanvasMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) * (CANVAS_SIZE / rect.width));
+    const y = Math.floor((e.clientY - rect.top) * (CANVAS_SIZE / rect.height));
+
+    setHoveredPixel({ x, y });
+  }, []);
+
+  const handleCanvasMouseLeave = useCallback(() => {
+    setHoveredPixel(null);
+  }, []);
+
+  useEffect(() => {
+    const updateScreenSize = () => {
+      setScreenSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener('resize', updateScreenSize);
+    updateScreenSize();
+
+    return () => window.removeEventListener('resize', updateScreenSize);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Set canvas size based on screen size
+    const size = Math.min(screenSize.width, screenSize.height) * 0.9;
+    canvas.width = size;
+    canvas.height = size;
+
+    // Draw pixels
+    const pixelSize = size / CANVAS_SIZE;
+    pixels.forEach((color, i) => {
+      const x = (i % CANVAS_SIZE) * pixelSize;
+      const y = Math.floor(i / CANVAS_SIZE) * pixelSize;
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, pixelSize, pixelSize);
+    });
+
+    // Draw hover preview
+    if (hoveredPixel) {
+      ctx.fillStyle = selectedColor;
+      ctx.globalAlpha = 0.5;
+      ctx.fillRect(
+        hoveredPixel.x * pixelSize,
+        hoveredPixel.y * pixelSize,
+        pixelSize,
+        pixelSize
+      );
+      ctx.globalAlpha = 1;
+    }
+  }, [pixels, hoveredPixel, selectedColor, screenSize]);
+
+  useEffect(() => {
+    if (lastPlaced) {
+      const interval = setInterval(() => {
+        const remaining = COOLDOWN_TIME - (Date.now() - lastPlaced);
+        setCooldownRemaining(remaining > 0 ? remaining : 0);
+      }, 100);
+
+      return () => clearInterval(interval);
+    }
+  }, [lastPlaced]);
+
   return (
     <div className={`h-screen w-screen relative overflow-hidden ${
       settings.theme.isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
@@ -69,8 +175,6 @@ function App() {
       {/* Canvas */}
       <canvas
         ref={canvasRef}
-        width={CANVAS_SIZE * PIXEL_SIZE}
-        height={CANVAS_SIZE * PIXEL_SIZE}
         onClick={handleCanvasClick}
         onMouseMove={handleCanvasMouseMove}
         onMouseLeave={handleCanvasMouseLeave}
@@ -102,23 +206,20 @@ function App() {
           <MapIcon className="w-6 h-6" />
         </button>
         
-        {isAuthenticated ? (
-          <button
-            onClick={() => setAuthState(prev => ({ ...prev, showProfile: true }))}
-            className={`w-10 h-10 ${settings.theme.isRound ? 'rounded-full' : 'rounded-lg'}
-              ${settings.theme.isDark ? 'bg-gray-800' : 'bg-white'} shadow-lg flex items-center justify-center overflow-hidden`}
-          >
-            <img src={user?.picture} alt={user?.name} className="w-6 h-6 rounded-full" />
-          </button>
-        ) : (
-          <button
-            onClick={() => loginWithRedirect()}
-            className={`w-10 h-10 ${settings.theme.isRound ? 'rounded-full' : 'rounded-lg'}
-              ${settings.theme.isDark ? 'bg-gray-800' : 'bg-white'} shadow-lg flex items-center justify-center`}
-          >
+        <button
+          onClick={() => isAuthenticated 
+            ? setAuthState(prev => ({ ...prev, showProfile: true }))
+            : loginWithRedirect()
+          }
+          className={`w-10 h-10 ${settings.theme.isRound ? 'rounded-full' : 'rounded-lg'}
+            ${settings.theme.isDark ? 'bg-gray-800' : 'bg-white'} shadow-lg flex items-center justify-center`}
+        >
+          {isAuthenticated && user?.picture ? (
+            <img src={user.picture} alt={user.name} className="w-6 h-6 rounded-full" />
+          ) : (
             <User className="w-6 h-6" />
-          </button>
-        )}
+          )}
+        </button>
 
         <button
           onClick={() => setAuthState(prev => ({ ...prev, showHelp: true }))}
